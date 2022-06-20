@@ -1,0 +1,49 @@
+version: '3'
+networks:
+    default:
+        external:
+            name: bridge
+services:
+    nginx:
+        env_file: .env
+        image: nginx:stable
+        network_mode: bridge
+        restart: always
+        volumes:
+            - .:/var/www/app
+            - ./docker/nginx/nginx-dev.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - php
+        links:
+            - php
+        ports:
+            - ${PORT}:80
+    php:
+        env_file: .env
+        network_mode: bridge
+        restart: always
+        build:
+            context: ./docker/php
+            dockerfile: Dockerfile
+        volumes:
+            - ./:/var/www/app
+        links:
+            - mysql
+        depends_on:
+            - mysql
+    mysql:
+        env_file: .env
+        image: mysql:8
+        network_mode: bridge
+        restart: always
+        build:
+            context: ./docker/mysql
+            dockerfile: Dockerfile
+#        command: --default-authentication-plugin=mysql_native_password
+        environment:
+            - MYSQL_DATABASE=test_db
+            - MYSQL_ROOT_PASSWORD=root
+#        volumes:
+#            - "./docker/mysql/db:/var/lib/mysql"
+#            - "./docker/mysql/my.cnf:/etc/my.cnf"
+#            - "./docker/mysql/init/:/docker-entrypoint-initdb.d/"
